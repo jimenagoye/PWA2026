@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TP1 - Vue.js con CDN</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <style>
+    .completada {
+      text-decoration: line-through;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="app">
+    <!-- Paso 1: Estructura base + Paso 2: Perfil con interpolacion -->
+    <section>
+      <h1>Mi perfil</h1>
+      <p>Nombre: {{ nombre }}</p>
+      <p>Edad: {{ edad }}</p>
+      <p>Ciudad: {{ ciudad }}</p>
+    </section>
+
+    <!-- Paso 3: Contador interactivo -->
+    <section>
+      <h2>Contador</h2>
+      <p>Valor: {{ contador }}</p>
+      <button v-on:click="incrementar">Incrementar</button>
+      <button v-on:click="decrementar">Decrementar</button>
+    </section>
+
+    <!-- Paso 4: Lista de tareas -->
+    <section>
+      <h2>Lista de tareas</h2>
+      <input v-model="nuevaTarea" placeholder="Escribi una tarea..." v-on:keyup.enter="agregarTarea">
+      <button v-on:click="agregarTarea">Agregar</button>
+
+      <p>Total tareas: {{ totalTareas }}</p>
+      <p>Pendientes: {{ tareasPendientes }}</p>
+
+      <ul>
+        <li v-for="tarea in tareas" v-bind:key="tarea.id">
+          <input type="checkbox" v-model="tarea.completada">
+          <span v-bind:class="{ completada: tarea.completada }">{{ tarea.texto }}</span>
+        </li>
+      </ul>
+    </section>
+
+    <!-- Paso 5: Eventos del ciclo de vida -->
+    <section>
+      <h2>Eventos del ciclo de vida</h2>
+      <button v-on:click="forzarActualizacion">Forzar actualizacion</button>
+      <ul>
+        <li v-for="evento in eventos" v-bind:key="evento.timestamp">
+          <strong>{{ evento.nombre }}</strong> - {{ evento.timestamp }} ms
+        </li>
+      </ul>
+    </section>
+
+    <!-- Paso 6 y 7: Posts con Axios -->
+    <section>
+      <h2>Posts de la API ({{ posts.length }})</h2>
+      <p v-if="cargandoPosts">Cargando posts...</p>
+
+      <ul>
+        <li v-for="post in posts" v-bind:key="post.id">
+          <button v-on:click="obtenerPost(post.id)">#{{ post.id }} - {{ post.title }}</button>
+        </li>
+      </ul>
+
+      <div v-if="postSeleccionado">
+        <h3>Comentarios del post #{{ postSeleccionado }}</h3>
+        <p v-if="cargandoComentarios">Cargando comentarios...</p>
+        <ul>
+          <li v-for="comentario in comentarios" v-bind:key="comentario.id">
+            <strong>{{ comentario.email }}</strong>: {{ comentario.body }}
+          </li>
+        </ul>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const { createApp } = Vue;
+
+    // Array "marcaRaw" para registrar eventos sin disparar renders en loop
+    const historial = Vue.markRaw([]);
+
+    function registrarEvento(nombre) {
+      historial.push({ nombre, timestamp: Date.now() });
+    }
+
+    createApp({
+      data() {
+        return {
+          nombre: 'Jimena',
+          edad: 25,
+          ciudad: 'Viedma',
+          contador: 0,
+          nuevaTarea: '',
+          tareas: [
+            { id: 1, texto: 'Estudiar Vue.js', completada: false },
+            { id: 2, texto: 'Hacer el TP1', completada: true }
+          ],
+          eventos: historial,
+          posts: [],
+          comentarios: [],
+          postSeleccionado: null,
+          cargandoPosts: false,
+          cargandoComentarios: false
+        };
+      },
+      computed: {
+        totalTareas() {
+          return this.tareas.length;
+        },
+        tareasPendientes() {
+          return this.tareas.filter(tarea => !tarea.completada).length;
+        }
+      },
+      methods: {
+        incrementar() {
+          this.contador++;
+        },
+        decrementar() {
+          this.contador--;
+        },
+        agregarTarea() {
+          const texto = this.nuevaTarea.trim();
+          if (texto === '') return;
+          this.tareas.push({ id: Date.now(), texto, completada: false });
+          this.nuevaTarea = '';
+        },
+        forzarActualizacion() {
+          this.contador++;
+        },
+        async cargarPosts() {
+          this.cargandoPosts = true;
+          try {
+            for (let i = 1; i <= 10; i++) {
+              const respuesta = await axios.get(`https://jsonplaceholder.typicode.com/posts/${i}`);
+              this.posts.push(respuesta.data);
+            }
+          } catch (error) {
+            console.error('Error al cargar los posts:', error);
+          } finally {
+            this.cargandoPosts = false;
+            this.forzarActualizacion();
+          }
+        },
+        async obtenerPost(postId) {
+          this.postSeleccionado = postId;
+          this.cargandoComentarios = true;
+          try {
+            const respuesta = await axios.get(`https://jsonplaceholder.typicode.com/posts/${postId}/comments`);
+            this.comentarios = respuesta.data;
+          } catch (error) {
+            console.error('Error al cargar los comentarios:', error);
+          } finally {
+            this.cargandoComentarios = false;
+          }
+        }
+      },
+      beforeCreate() {
+        registrarEvento('beforeCreate');
+      },
+      created() {
+        registrarEvento('created');
+      },
+      beforeMount() {
+        registrarEvento('beforeMount');
+      },
+      mounted() {
+        registrarEvento('mounted');
+        this.forzarActualizacion();
+        this.cargarPosts();
+      },
+      beforeUpdate() {
+        registrarEvento('beforeUpdate');
+      },
+      updated() {
+        registrarEvento('updated');
+      }
+    }).mount('#app');
+  </script>
+
+</body>
+</html>
