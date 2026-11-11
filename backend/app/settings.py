@@ -1,3 +1,4 @@
+import os
 """
 Django settings for app project.
 
@@ -20,7 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-l5arx!x&#rd51ku(fzzh@x_gudx&+bi1#!z+r_w@d0f$ke-n5a'
+SECRET_KEY = 'django-insecure-7t+213)7og!+o-4%(vakw9dw@s+=axy)xsy6&_6r0tgn4^5je7'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -37,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'aulas',
 ]
 
 MIDDLEWARE = [
@@ -74,8 +76,13 @@ WSGI_APPLICATION = 'app.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ.get('POSTGRES_DB'),
+        'USER': os.environ.get('POSTGRES_USER'),
+        'PASSWORD': os.environ.get('POSTGRES_PASSWORD'),
+        'HOST': os.environ.get('DB_HOST'),
+        'PORT': '5432',
+        # 'OPTIONS': {'CHARSET':'IS08859_1'},
     }
 }
 
