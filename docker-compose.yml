@@ -16,6 +16,8 @@ services:
 
   postgres:
     image: postgres:16-alpine
+    env_file:
+      - .env-dist
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_DB: ${POSTGRES_DB}
