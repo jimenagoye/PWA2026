@@ -5,7 +5,12 @@ if [ ! -f manage.py ]
         django-admin startproject app .
 fi
 
-sleep 2
+echo "Esperando a que PostgreSQL acepte conexiones..."
+until python -c "import os, psycopg2; psycopg2.connect(dbname=os.environ.get('POSTGRES_DB','aulas_db'), user=os.environ.get('POSTGRES_USER','postgres'), password=os.environ.get('POSTGRES_PASSWORD','postgres'), host=os.environ.get('DB_HOST','postgres'), port=5432)" 2>/dev/null; do
+    echo "PostgreSQL todavia no esta listo, reintentando en 2s..."
+    sleep 2
+done
+echo "PostgreSQL listo."
 
 python manage.py makemigrations 
 python manage.py migrate --noinput

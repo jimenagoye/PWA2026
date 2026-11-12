@@ -6,18 +6,17 @@ services:
     volumes:
       - ./backend:/usr/src/app
     env_file:
-      - .env-dist
+      - .env
     ports:
-      - "8000:8000"
+      - 8000:8000
     networks:
       - red
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
 
   postgres:
     image: postgres:16-alpine
-    env_file:
-      - .env-dist
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_DB: ${POSTGRES_DB}
@@ -25,9 +24,14 @@ services:
     volumes:
       - ./pgdata:/var/lib/postgresql/data
     ports:
-      - "${DB_PORT}:5432"
+      - ${DB_PORT}:5432
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
     networks:
       - red 
-
 networks:
   red:
